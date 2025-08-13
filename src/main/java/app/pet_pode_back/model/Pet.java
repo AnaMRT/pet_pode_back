@@ -31,6 +31,9 @@ public class Pet {
         this.usuario = usuario;
     }
 
+    public Pet() {
+    }
+
     public UUID getId() {
         return id;
     }

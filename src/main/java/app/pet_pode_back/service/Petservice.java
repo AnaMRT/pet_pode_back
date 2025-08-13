@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class Petservice {
@@ -16,8 +17,14 @@ public class Petservice {
     @Autowired
     private PetRepository petRepository;
 
-    public Pet cadastrar(@Valid Pet pet) {
-        System.out.println("🐾 Cadastrando pet: " + pet.getNome() + ", dono: " + (pet.getUsuario() != null ? pet.getUsuario().getEmail() : "NULO"));
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    public Pet salvarPet(Pet pet, UUID usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        pet.setUsuario(usuario);
         return petRepository.save(pet);
     }
 

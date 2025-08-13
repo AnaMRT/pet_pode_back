@@ -4,6 +4,7 @@ import app.pet_pode_back.model.Pet;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.PetRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
+import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.Petservice;
 import app.pet_pode_back.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -12,13 +13,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequestMapping(path = "pet")
@@ -28,10 +27,8 @@ public class PetController {
     private Petservice petService;
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private JwtUtil jwtUtil;
 
-    @Autowired
-    private PetRepository petRepository;
 
     @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<List<Pet>> get() {
@@ -39,16 +36,14 @@ public class PetController {
     }
 
     @PostMapping
-    public ResponseEntity<Pet> cadastrar(@RequestBody Pet pet, Principal principal) {
-        String emailDoUsuarioLogado = principal.getName();
+    public ResponseEntity<Pet> cadastrarPet(@RequestBody Pet pet,
+                                            @RequestHeader("Authorization") String token) {
+        String jwt = token.replace("Bearer ", "");
+        UUID usuarioId = JwtUtil.extrairUsuarioId(jwt);
 
-        Usuario usuario = usuarioRepository.findByEmail(emailDoUsuarioLogado)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        pet.setUsuario(usuario);
-        Pet salvo = petRepository.save(pet);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
+        Pet novoPet = petService.salvarPet(pet, usuarioId);
+        return ResponseEntity.ok(novoPet);
     }
 
 }
+
