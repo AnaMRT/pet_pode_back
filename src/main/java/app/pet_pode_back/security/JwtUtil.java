@@ -18,7 +18,7 @@ public class JwtUtil {
 
     public static String gerarToken(UUID usuarioId) {
         return Jwts.builder()
-                .setSubject(usuarioId.toString()) // UUID como subject
+                .setSubject(usuarioId.toString())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
@@ -31,7 +31,7 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
-        return UUID.fromString(subject); // Converter de volta para UUID
+        return UUID.fromString(subject);
     }
 }
 

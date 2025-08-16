@@ -1,13 +1,8 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.model.Pet;
-import app.pet_pode_back.model.Usuario;
-import app.pet_pode_back.repository.PetRepository;
-import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.Petservice;
-import app.pet_pode_back.service.UsuarioService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +25,7 @@ public class PetController {
     private JwtUtil jwtUtil;
 
 
-    @GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE })
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<List<Pet>> get() {
         return ResponseEntity.status(HttpStatus.OK).body(petService.listarTodos());
     }
@@ -44,6 +39,10 @@ public class PetController {
         Pet novoPet = petService.salvarPet(pet, usuarioId);
         return ResponseEntity.ok(novoPet);
     }
-
 }
+
+
+
+
+
 

@@ -30,7 +30,7 @@ public class Usuario {
     private String email;
 
 
-   //@Size(min = 3, max = 14, message = "senha não pode ter mais que 3 caracteres e menos de 3")
+  // @Size(min = 5, max = 10, message = "senha não pode ter mais que 10 caracteres e menos de 5")
     @NotBlank(message = "Senha nao pode ser nula")
     @Column
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

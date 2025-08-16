@@ -1,5 +1,6 @@
 package app.pet_pode_back.exception.handler;
-import app.pet_pode_back.exception.RegistroNaoEcontradoException;
+import app.pet_pode_back.exception.ParametroInvalidoException;
+import app.pet_pode_back.exception.RegistroNaoEncontradoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,10 +14,18 @@ public class RestExceptionHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ErroResponse> trataRegistroNaoEcontradoException(RegistroNaoEcontradoException ex) {
+    public ResponseEntity<ErroResponse> trataRegistroNaoEcontradoException(RegistroNaoEncontradoException ex) {
         ErroResponse errorResponse = new ErroResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage());
         return new ResponseEntity<ErroResponse>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErroResponse> trataParametroInvalidoException(ParametroInvalidoException ex) {
+        ErroResponse errorResponse = new ErroResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        return new ResponseEntity<ErroResponse>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -34,4 +43,5 @@ public class RestExceptionHandler {
         ErroResponse errorResponse = new ErroResponse(HttpStatus.BAD_REQUEST.value(), sb.toString());
         return new ResponseEntity<ErroResponse>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
 }

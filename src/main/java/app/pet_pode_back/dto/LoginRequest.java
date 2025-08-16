@@ -1,4 +1,4 @@
-package app.pet_pode_back.model;
+package app.pet_pode_back.dto;
 
 
 public class LoginRequest {
