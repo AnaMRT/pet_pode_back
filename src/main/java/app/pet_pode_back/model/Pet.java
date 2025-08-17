@@ -39,7 +39,7 @@ public class Pet {
     }
 
     public void setId(UUID id) {
-        this.id = id;  // ⚡ usar this.id
+        this.id = id;
     }
 
 

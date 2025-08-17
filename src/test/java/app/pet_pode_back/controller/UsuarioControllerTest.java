@@ -74,7 +74,6 @@ class UsuarioControllerTest {
 
     @Test
     void deveEditarUsuarioComSucesso() throws Exception {
-        // Arrange
         UUID usuarioId = UUID.randomUUID();
         String token = JwtUtil.gerarToken(usuarioId);
 
@@ -91,7 +90,6 @@ class UsuarioControllerTest {
 
         when(usuarioService.editarUsuario(eq(usuarioId), any(UsuarioUpdateDTO.class))).thenReturn(usuarioEditado);
 
-        // Act & Assert
         mockMvc.perform(put("/usuario")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -105,7 +103,6 @@ class UsuarioControllerTest {
 
     @Test
     void deveListarUsuariosComSucessoNoController() throws Exception {
-        // Arrange: cria a lista de usuários mockada
         List<Usuario> listaUsuarios = new ArrayList<>();
         Usuario usuario1 = new Usuario();
         usuario1.setId(UUID.randomUUID());
@@ -113,18 +110,15 @@ class UsuarioControllerTest {
         usuario1.setEmail("teste@email.com");
         listaUsuarios.add(usuario1);
 
-        // Mock do service para retornar a lista
         when(usuarioService.listarTodos()).thenReturn(listaUsuarios);
 
-        // Act & Assert: realiza a requisição GET e verifica o status e conteúdo
-        mockMvc.perform(get("/usuario")  // supondo que o endpoint GET seja /usuario
+        mockMvc.perform(get("/usuario")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(usuario1.getId().toString()))
                 .andExpect(jsonPath("$[0].nome").value("Teste"))
                 .andExpect(jsonPath("$[0].email").value("teste@email.com"));
 
-        // Verifica se o service foi chamado
         verify(usuarioService, times(1)).listarTodos();
     }
 

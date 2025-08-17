@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.security.core.parameters.P;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +63,6 @@ public class PetServiceTest {
 
     @Test
     void deveListarPetsComSucesso() {
-        // Arrange: cria a lista de usuários que será retornada pelo mock
         List<Pet> listaPet = new ArrayList<>();
         Pet pet1 = new Pet();
         pet1.setId(UUID.randomUUID());
@@ -72,13 +70,10 @@ public class PetServiceTest {
         pet1.setEspecie("canino");
         listaPet.add(pet1);
 
-        // Mock do repository para retornar a lista
         when(petRepository.findAll()).thenReturn(listaPet);
 
-        // Act: chama o método do service
         List<Pet> retorno = petService.listarTodos();
 
-        // Assert: verifica se o repository foi chamado e se os dados batem
         verify(petRepository, times(1)).findAll();
         assertEquals(1, retorno.size(), "Não retornou o tamanho correto");
         assertEquals(listaPet.get(0).getId(), retorno.get(0).getId(), "Não retornou o pet correto");

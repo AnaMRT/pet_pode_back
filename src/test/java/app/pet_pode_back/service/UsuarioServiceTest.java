@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -72,7 +70,6 @@ class UsuarioServiceTest {
 
     @Test
     void editarUsuarioComSucesso() {
-        // Arrange
         UUID usuarioId = usuario.getId();
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setNome("Novo Nome");
@@ -83,10 +80,8 @@ class UsuarioServiceTest {
         when(passwordEncoder.encode("novaSenha")).thenReturn("senhaCriptografada");
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
 
-        // Act
         Usuario usuarioEditado = usuarioService.editarUsuario(usuarioId, dto);
 
-        // Assert
         assertNotNull(usuarioEditado);
         assertEquals("Novo Nome", usuarioEditado.getNome());
         assertEquals("novo@email.com", usuarioEditado.getEmail());
@@ -96,7 +91,6 @@ class UsuarioServiceTest {
 
     @Test
     void deveListarUsuariosComSucesso() {
-        // Arrange: cria a lista de usuários que será retornada pelo mock
         List<Usuario> listaUsuarios = new ArrayList<>();
         Usuario usuario1 = new Usuario();
         usuario1.setId(UUID.randomUUID());
@@ -104,13 +98,10 @@ class UsuarioServiceTest {
         usuario1.setEmail("teste@email.com");
         listaUsuarios.add(usuario1);
 
-        // Mock do repository para retornar a lista
         when(usuarioRepository.findAll()).thenReturn(listaUsuarios);
 
-        // Act: chama o método do service
         List<Usuario> retorno = usuarioService.listarTodos();
 
-        // Assert: verifica se o repository foi chamado e se os dados batem
         verify(usuarioRepository, times(1)).findAll();
         assertEquals(1, retorno.size(), "Não retornou o tamanho correto");
         assertEquals(listaUsuarios.get(0).getId(), retorno.get(0).getId(), "Não retornou o usuário correto");
@@ -118,7 +109,6 @@ class UsuarioServiceTest {
 
     @Test
     void deveRetornarUsuarioSeEmailNaoExistir() {
-        // Mock: findByEmail retorna vazio, indicando que o email não existe
         when(usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.empty());
 
         Usuario resultado = usuarioService.verificarEmailExistente(usuario);
