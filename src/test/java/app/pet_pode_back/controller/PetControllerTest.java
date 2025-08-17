@@ -73,6 +73,8 @@ class PetControllerTest {
         verify(petService, times(1)).salvarPet(any(Pet.class), any(UUID.class));
     }
 
+
+
     @Test
     void listarPetsComSucesso() throws Exception {
         List<Pet> listaPets = new ArrayList<>();

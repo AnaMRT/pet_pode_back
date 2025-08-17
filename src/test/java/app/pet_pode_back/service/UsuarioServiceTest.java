@@ -56,6 +56,21 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void cadastrarUsuarioFalhaNoBanco() {
+        when(passwordEncoder.encode(usuario.getSenha())).thenReturn("senhaCriptografada");
+        when(usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.empty());
+        when(usuarioRepository.save(any(Usuario.class))).thenThrow(new RuntimeException("Erro ao salvar usuário"));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            usuarioService.cadastrar(usuario);
+        });
+
+        assertEquals("Erro ao salvar usuário", exception.getMessage());
+    }
+
+
+
+    @Test
     void removerUsuarioComSucesso() {
         UUID usuarioId = UUID.randomUUID();
         Usuario usuario = new Usuario();
@@ -67,6 +82,37 @@ class UsuarioServiceTest {
 
         verify(usuarioRepository, times(1)).delete(usuario);
     }
+
+    @Test
+    void removerUsuarioNaoEncontrado() {
+        UUID usuarioId = UUID.randomUUID();
+
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            usuarioService.remover(usuarioId);
+        });
+
+        assertEquals("Usuário não encontrado", exception.getMessage());
+        verify(usuarioRepository, times(0)).delete(any(Usuario.class));
+    }
+
+    @Test
+    void removerUsuarioFalhaNoBanco() {
+        UUID usuarioId = UUID.randomUUID();
+        Usuario usuario = new Usuario();
+        usuario.setId(usuarioId);
+
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+        doThrow(new RuntimeException("Erro ao remover usuário")).when(usuarioRepository).delete(usuario);
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            usuarioService.remover(usuarioId);
+        });
+
+        assertEquals("Erro ao remover usuário", exception.getMessage());
+    }
+
 
     @Test
     void editarUsuarioComSucesso() {
@@ -88,6 +134,7 @@ class UsuarioServiceTest {
         assertEquals("senhaCriptografada", usuarioEditado.getSenha());
         verify(usuarioRepository, times(1)).save(usuario);
     }
+
 
     @Test
     void deveListarUsuariosComSucesso() {

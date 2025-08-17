@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -60,6 +60,30 @@ public class PetServiceTest {
         assertEquals(usuario, petSalvo.getUsuario());
     }
 
+    @Test
+    public void salvarPetUsuarioNaoEncontrado() {
+        when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            petService.salvarPet(pet, usuario.getId());
+        });
+
+        assertEquals("Usuário não encontrado", exception.getMessage());
+    }
+
+    @Test
+    public void salvarPetFalhaNoBanco() {
+        when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
+        when(petRepository.save(any(Pet.class))).thenThrow(new RuntimeException("Erro ao salvar pet"));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            petService.salvarPet(pet, usuario.getId());
+        });
+
+        assertEquals("Erro ao salvar pet", exception.getMessage());
+    }
+
+
 
     @Test
     void deveListarPetsComSucesso() {
@@ -78,4 +102,27 @@ public class PetServiceTest {
         assertEquals(1, retorno.size(), "Não retornou o tamanho correto");
         assertEquals(listaPet.get(0).getId(), retorno.get(0).getId(), "Não retornou o pet correto");
     }
+
+    @Test
+    void listarPetsVazio() {
+        when(petRepository.findAll()).thenReturn(new ArrayList<>());
+
+        List<Pet> retorno = petService.listarTodos();
+
+        verify(petRepository, times(1)).findAll();
+        assertTrue(retorno.isEmpty(), "A lista deveria estar vazia");
+    }
+
+    @Test
+    void listarPetsFalhaNoBanco() {
+        when(petRepository.findAll()).thenThrow(new RuntimeException("Erro ao acessar banco"));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            petService.listarTodos();
+        });
+
+        assertEquals("Erro ao acessar banco", exception.getMessage());
+    }
+
+
 }

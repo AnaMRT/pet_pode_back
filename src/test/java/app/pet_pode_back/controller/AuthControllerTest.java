@@ -45,7 +45,6 @@ public class AuthControllerTest {
 
         usuarioRepository.deleteAll();
 
-
         usuario = new Usuario();
         usuario.setNome("Teste");
         usuario.setEmail("teste@email.com");
