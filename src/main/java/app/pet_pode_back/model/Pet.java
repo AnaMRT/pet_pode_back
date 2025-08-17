@@ -39,8 +39,9 @@ public class Pet {
     }
 
     public void setId(UUID id) {
-        id = id;
+        this.id = id;  // ⚡ usar this.id
     }
+
 
     public String getNome() {
         return nome;

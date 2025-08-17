@@ -1,6 +1,7 @@
 package app.pet_pode_back.controller;
 
 import app.pet_pode_back.model.Pet;
+import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.Petservice;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,7 @@ public class PetController {
         Pet novoPet = petService.salvarPet(pet, usuarioId);
         return ResponseEntity.ok(novoPet);
     }
+
 }
 
 

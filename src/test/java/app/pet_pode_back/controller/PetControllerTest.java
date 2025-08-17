@@ -7,35 +7,33 @@ import app.pet_pode_back.service.Petservice;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-public class PetControllerTest {
+class PetControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private Petservice petService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private PetController petController;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private Pet pet;
     private Usuario usuario;
@@ -43,8 +41,9 @@ public class PetControllerTest {
 
     @BeforeEach
     public void setup() {
-        usuarioId = UUID.randomUUID();
+        MockitoAnnotations.openMocks(this);
 
+        usuarioId = UUID.randomUUID();
         usuario = new Usuario();
         usuario.setId(usuarioId);
         usuario.setNome("João");
@@ -53,10 +52,12 @@ public class PetControllerTest {
         pet.setNome("Rex");
         pet.setEspecie("Cachorro");
         pet.setUsuario(usuario);
+
+        mockMvc = MockMvcBuilders.standaloneSetup(petController).build();
     }
 
     @Test
-    public void deveCadastrarPetComSucesso() throws Exception {
+    void cadastrarPetComSucesso() throws Exception {
         String token = JwtUtil.gerarToken(usuarioId);
 
         when(petService.salvarPet(any(Pet.class), any(UUID.class))).thenReturn(pet);
@@ -68,5 +69,28 @@ public class PetControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nome").value("Rex"))
                 .andExpect(jsonPath("$.especie").value("Cachorro"));
+
+        verify(petService, times(1)).salvarPet(any(Pet.class), any(UUID.class));
+    }
+
+    @Test
+    void listarPetsComSucesso() throws Exception {
+        List<Pet> listaPets = new ArrayList<>();
+        Pet pet1 = new Pet();
+        pet1.setId(UUID.randomUUID());
+        pet1.setNome("Teste");
+        pet1.setEspecie("Canino");
+        listaPets.add(pet1);
+
+        when(petService.listarTodos()).thenReturn(listaPets);
+
+        mockMvc.perform(get("/pet")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(pet1.getId().toString()))
+                .andExpect(jsonPath("$[0].nome").value("Teste"))
+                .andExpect(jsonPath("$[0].especie").value("Canino"));
+
+        verify(petService, times(1)).listarTodos();
     }
 }

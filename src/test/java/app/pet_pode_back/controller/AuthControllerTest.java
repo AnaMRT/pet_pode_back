@@ -54,7 +54,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void deveFazerLoginComSucesso() throws Exception {
+    public void FazerLoginComSucesso() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail("teste@email.com");
         loginRequest.setSenha("senha123");

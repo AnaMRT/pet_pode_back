@@ -1,8 +1,8 @@
 package app.pet_pode_back.service;
 
-
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
+import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,9 +10,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -41,7 +45,7 @@ class UsuarioServiceTest {
     }
 
     @Test
-    void deveCadastrarUsuarioComSucesso() {
+    void cadastrarUsuarioComSucesso() {
         when(passwordEncoder.encode(usuario.getSenha())).thenReturn("senhaCriptografada");
         when(usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.empty());
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
@@ -53,4 +57,76 @@ class UsuarioServiceTest {
         verify(usuarioRepository, times(1)).save(usuario);
     }
 
+    @Test
+    void removerUsuarioComSucesso() {
+        UUID usuarioId = UUID.randomUUID();
+        Usuario usuario = new Usuario();
+        usuario.setId(usuarioId);
+
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+
+        usuarioService.remover(usuarioId);
+
+        verify(usuarioRepository, times(1)).delete(usuario);
+    }
+
+    @Test
+    void editarUsuarioComSucesso() {
+        // Arrange
+        UUID usuarioId = usuario.getId();
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNome("Novo Nome");
+        dto.setEmail("novo@email.com");
+        dto.setSenha("novaSenha");
+
+        when(usuarioRepository.findById(usuarioId)).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.encode("novaSenha")).thenReturn("senhaCriptografada");
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
+
+        // Act
+        Usuario usuarioEditado = usuarioService.editarUsuario(usuarioId, dto);
+
+        // Assert
+        assertNotNull(usuarioEditado);
+        assertEquals("Novo Nome", usuarioEditado.getNome());
+        assertEquals("novo@email.com", usuarioEditado.getEmail());
+        assertEquals("senhaCriptografada", usuarioEditado.getSenha());
+        verify(usuarioRepository, times(1)).save(usuario);
+    }
+
+    @Test
+    void deveListarUsuariosComSucesso() {
+        // Arrange: cria a lista de usuários que será retornada pelo mock
+        List<Usuario> listaUsuarios = new ArrayList<>();
+        Usuario usuario1 = new Usuario();
+        usuario1.setId(UUID.randomUUID());
+        usuario1.setNome("Teste");
+        usuario1.setEmail("teste@email.com");
+        listaUsuarios.add(usuario1);
+
+        // Mock do repository para retornar a lista
+        when(usuarioRepository.findAll()).thenReturn(listaUsuarios);
+
+        // Act: chama o método do service
+        List<Usuario> retorno = usuarioService.listarTodos();
+
+        // Assert: verifica se o repository foi chamado e se os dados batem
+        verify(usuarioRepository, times(1)).findAll();
+        assertEquals(1, retorno.size(), "Não retornou o tamanho correto");
+        assertEquals(listaUsuarios.get(0).getId(), retorno.get(0).getId(), "Não retornou o usuário correto");
+    }
+
+    @Test
+    void deveRetornarUsuarioSeEmailNaoExistir() {
+        // Mock: findByEmail retorna vazio, indicando que o email não existe
+        when(usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.empty());
+
+        Usuario resultado = usuarioService.verificarEmailExistente(usuario);
+
+        assertNotNull(resultado);
+        assertEquals("teste@email.com", resultado.getEmail());
+        assertEquals("Teste", resultado.getNome());
+
+        verify(usuarioRepository, times(1)).findByEmail(usuario.getEmail());
+    }
 }

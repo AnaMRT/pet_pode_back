@@ -1,58 +1,131 @@
-import app.pet_pode_back.PetPodeBackApplication;
+import app.pet_pode_back.controller.UsuarioController;
+import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.model.Usuario;
+import app.pet_pode_back.security.JwtUtil;
 import app.pet_pode_back.service.UsuarioService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@SpringBootTest(classes = PetPodeBackApplication.class)
-public class UsuarioControllerTest {
+class UsuarioControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private UsuarioService usuarioService;
 
-    @MockBean
-    private PasswordEncoder passwordEncoder;
+    @InjectMocks
+    private UsuarioController usuarioController;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
+    private Usuario usuario;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(usuarioController).build();
+    }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"USER"})
-    public void deveCadastrarUsuarioComSucesso() throws Exception {
-
+    void CadastrarUsuarioComSucesso() throws Exception {
         Usuario usuarioMock = new Usuario();
         usuarioMock.setId(UUID.randomUUID());
         usuarioMock.setNome("Teste");
         usuarioMock.setEmail("teste@email.com");
         usuarioMock.setSenha("senha123");
 
-
         when(usuarioService.cadastrar(any(Usuario.class))).thenReturn(usuarioMock);
-
 
         mockMvc.perform(post("/usuario")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nome\":\"Teste\",\"email\":\"teste@email.com\",\"senha\":\"senha123\"}"))
-                .andExpect(status().isCreated()) // Espera HTTP 201
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nome").value("Teste"))
                 .andExpect(jsonPath("$.email").value("teste@email.com"));
     }
+
+    @Test
+    void deveRemoverUsuarioComSucesso() throws Exception {
+        UUID usuarioId = UUID.randomUUID();
+        String token = JwtUtil.gerarToken(usuarioId);
+
+        mockMvc.perform(delete("/usuario")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(usuarioService, times(1)).remover(usuarioId);
+    }
+
+    @Test
+    void deveEditarUsuarioComSucesso() throws Exception {
+        // Arrange
+        UUID usuarioId = UUID.randomUUID();
+        String token = JwtUtil.gerarToken(usuarioId);
+
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNome("Novo Nome");
+        dto.setEmail("novo@email.com");
+        dto.setSenha("novaSenha");
+
+        Usuario usuarioEditado = new Usuario();
+        usuarioEditado.setId(usuarioId);
+        usuarioEditado.setNome("Novo Nome");
+        usuarioEditado.setEmail("novo@email.com");
+        usuarioEditado.setSenha("senhaCriptografada");
+
+        when(usuarioService.editarUsuario(eq(usuarioId), any(UsuarioUpdateDTO.class))).thenReturn(usuarioEditado);
+
+        // Act & Assert
+        mockMvc.perform(put("/usuario")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Novo Nome"))
+                .andExpect(jsonPath("$.email").value("novo@email.com"));
+
+        verify(usuarioService, times(1)).editarUsuario(eq(usuarioId), any(UsuarioUpdateDTO.class));
+    }
+
+    @Test
+    void deveListarUsuariosComSucessoNoController() throws Exception {
+        // Arrange: cria a lista de usuários mockada
+        List<Usuario> listaUsuarios = new ArrayList<>();
+        Usuario usuario1 = new Usuario();
+        usuario1.setId(UUID.randomUUID());
+        usuario1.setNome("Teste");
+        usuario1.setEmail("teste@email.com");
+        listaUsuarios.add(usuario1);
+
+        // Mock do service para retornar a lista
+        when(usuarioService.listarTodos()).thenReturn(listaUsuarios);
+
+        // Act & Assert: realiza a requisição GET e verifica o status e conteúdo
+        mockMvc.perform(get("/usuario")  // supondo que o endpoint GET seja /usuario
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(usuario1.getId().toString()))
+                .andExpect(jsonPath("$[0].nome").value("Teste"))
+                .andExpect(jsonPath("$[0].email").value("teste@email.com"));
+
+        // Verifica se o service foi chamado
+        verify(usuarioService, times(1)).listarTodos();
+    }
+
 }
