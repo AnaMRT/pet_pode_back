@@ -25,7 +25,7 @@ public class Usuario {
     private String nome;
 
     @NotBlank(message = "Email nao pode ser nulo")
-    @Column
+    @Column(unique = true, nullable = false)
     @Email
     private String email;
 
@@ -36,11 +36,14 @@ public class Usuario {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String senha;
 
-    public Usuario(UUID id, String nome, String email, String senha) {
+    private String resetToken;
+
+    public Usuario(UUID id, String nome, String email, String senha, String resetToken) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.senha = senha;
+        this.resetToken = resetToken;
     }
 
     public Usuario() {
@@ -78,15 +81,23 @@ public class Usuario {
         this.senha = senha;
     }
 
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Usuario usuario = (Usuario) o;
-        return Objects.equals(id, usuario.id) && Objects.equals(nome, usuario.nome) && Objects.equals(email, usuario.email) && Objects.equals(senha, usuario.senha);
+        return Objects.equals(id, usuario.id) && Objects.equals(nome, usuario.nome) && Objects.equals(email, usuario.email) && Objects.equals(senha, usuario.senha) && Objects.equals(resetToken, usuario.resetToken);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, nome, email, senha);
+        return Objects.hash(id, nome, email, senha, resetToken);
     }
 }

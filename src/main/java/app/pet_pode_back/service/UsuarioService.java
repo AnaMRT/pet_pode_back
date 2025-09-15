@@ -16,10 +16,14 @@ import java.util.UUID;
 @Service
 public class UsuarioService {
 
+
+
     @Autowired
     private UsuarioRepository usuarioRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+
 
     public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
@@ -70,6 +74,24 @@ public class UsuarioService {
             throw new ParametroInvalidoException("Este email já está cadastrado. Tente novamente");
         }
         return usuario;
+    }
+
+    public void gerarTokenReset(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        String token = UUID.randomUUID().toString();
+        usuario.setResetToken(token);
+        usuarioRepository.save(usuario);
+    }
+
+    public void atualizarSenha(String token, String novaSenha) {
+        Usuario usuario = usuarioRepository.findByResetToken(token)
+                .orElseThrow(() -> new RuntimeException("Token inválido"));
+
+        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        usuario.setResetToken(null); // invalida token
+        usuarioRepository.save(usuario);
     }
 
 
