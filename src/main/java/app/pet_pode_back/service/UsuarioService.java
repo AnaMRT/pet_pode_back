@@ -3,12 +3,25 @@ package app.pet_pode_back.service;
 import app.pet_pode_back.dto.UsuarioUpdateDTO;
 import app.pet_pode_back.exception.ParametroInvalidoException;
 import app.pet_pode_back.model.Usuario;
+import app.pet_pode_back.repository.PasswordResetTokenRepository;
 import app.pet_pode_back.repository.UsuarioRepository;
+
+import app.pet_pode_back.model.PasswordResetToken;
+import app.pet_pode_back.model.Usuario;
+import app.pet_pode_back.repository.PasswordResetTokenRepository;
+import app.pet_pode_back.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +31,11 @@ public class UsuarioService {
 
 
 
+
+    @Autowired
+    private PasswordResetTokenRepository resetTokenRepository;
+    @Autowired
+    private EmailService emailService;
     @Autowired
     private UsuarioRepository usuarioRepository;
     @Autowired
@@ -76,25 +94,47 @@ public class UsuarioService {
         return usuario;
     }
 
-    public void gerarTokenReset(String email) {
+    public void solicitarRedefinicaoSenha(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         String token = UUID.randomUUID().toString();
-        usuario.setResetToken(token);
-        usuarioRepository.save(usuario);
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setToken(token);
+        resetToken.setUsuario(usuario);
+        resetToken.setExpirationDate(LocalDateTime.now().plusMinutes(15));
+        resetToken.setUsed(false);
+
+        resetTokenRepository.save(resetToken);
+
+        String link = "https://seusite.com/reset-password?token=" + token;
+
+        emailService.enviarEmail(
+                usuario.getEmail(),
+                "Redefinição de senha",
+                "Clique no link para redefinir sua senha: " + link
+        );
     }
 
-    public void atualizarSenha(String token, String novaSenha) {
-        Usuario usuario = usuarioRepository.findByResetToken(token)
-                .orElseThrow(() -> new RuntimeException("Token inválido"));
+    public void redefinirSenha(String token, String novaSenha) {
+        PasswordResetToken resetToken = resetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token inválido."));
 
+        if (resetToken.isUsed()) {
+            throw new RuntimeException("Token já foi utilizado.");
+        }
+
+        if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token expirado.");
+        }
+
+        Usuario usuario = resetToken.getUsuario();
         usuario.setSenha(passwordEncoder.encode(novaSenha));
-        usuario.setResetToken(null); // invalida token
         usuarioRepository.save(usuario);
+
+        resetToken.setUsed(true);
+        resetTokenRepository.save(resetToken);
     }
-
-
 }
 
 

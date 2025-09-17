@@ -1,5 +1,6 @@
 package app.pet_pode_back.controller;
 
+import app.pet_pode_back.dto.ResetPasswordDTO;
 import app.pet_pode_back.model.Usuario;
 import app.pet_pode_back.repository.UsuarioRepository;
 import app.pet_pode_back.service.EmailService;
@@ -29,32 +30,20 @@ public class PasswordResetController {
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestParam("email") String email) {
         try {
-            Usuario usuario = usuarioRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-            String token = UUID.randomUUID().toString();
-            usuario.setResetToken(token);
-            usuarioRepository.save(usuario);
-
-            emailService.enviarEmail(
-                    usuario.getEmail(),
-                    "Recuperação de senha",
-                    "Use este token para redefinir sua senha: " + token
-            );
-
-            return ResponseEntity.ok("E-mail de recuperação enviado para: " + email);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            usuarioService.solicitarRedefinicaoSenha(email);
+            return ResponseEntity.ok("Instruções de redefinição de senha enviadas por e-mail.");
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Erro interno: " + e.getMessage());
+            return ResponseEntity.status(400).body(e.getMessage());
         }
     }
 
-
-
     @PostMapping("/reset-password")
-    public String resetPassword(@RequestParam String token, @RequestParam String novaSenha) {
-        usuarioService.atualizarSenha(token, novaSenha);
-        return "Senha atualizada com sucesso!";
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDTO dto) {
+        try {
+            usuarioService.redefinirSenha(dto.getToken(), dto.getNovaSenha());
+            return ResponseEntity.ok("Senha redefinida com sucesso.");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
     }
 }
